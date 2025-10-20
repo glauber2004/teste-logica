@@ -1,0 +1,43 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+#ui {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#ui label {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+#ui input {
+  width: 100px;
+  padding: 5px;
+  margin-bottom: 5px;
+}
+
+#ui button {
+  width: 100%;
+  padding: 6px;
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+#ui button:hover {
+  background-color: #45a049;
+}
