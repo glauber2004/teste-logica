@@ -5,7 +5,9 @@ let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 let material: THREE.MeshLambertMaterial;
 let partes: THREE.Object3D[] = [];
+let furosELinhas: THREE.Object3D[] = []; // Array separado para furos e linhas
 let opacidadeAtiva = false; // Controla o estado da opacidade
+let mostrarFuros = false; // Controla visibilidade dos furos
 
 init();
 criarMovel();
@@ -31,7 +33,7 @@ function init(): void {
   scene.add(new THREE.GridHelper(5, 20));
 
   material = new THREE.MeshLambertMaterial({ 
-    color: 0xb7d6b3, 
+    color: 0xb7d6b33, 
     opacity: 1.0, 
     transparent: true 
   });
@@ -47,6 +49,9 @@ function init(): void {
 
   const btnOpacidade = document.getElementById("opacidade");
   if (btnOpacidade) btnOpacidade.addEventListener("click", alternarOpacidade);
+
+  const btnFuros = document.getElementById("furos");
+  if (btnFuros) btnFuros.addEventListener("click", alternarFuros);
 }
 
 function getInputMeters(id: string, defaultMm: number): number {
@@ -58,6 +63,8 @@ function getInputMeters(id: string, defaultMm: number): number {
 function limparPartes() {
   partes.forEach((o) => scene.remove(o));
   partes = [];
+  furosELinhas.forEach((o) => scene.remove(o));
+  furosELinhas = [];
 }
 
 function alternarOpacidade(): void {
@@ -70,6 +77,14 @@ function alternarOpacidade(): void {
   }
   
   material.needsUpdate = true;
+}
+
+function alternarFuros(): void {
+  mostrarFuros = !mostrarFuros;
+  
+  furosELinhas.forEach((obj) => {
+    obj.visible = mostrarFuros;
+  });
 }
 
 function criarMovel(): void {
@@ -131,8 +146,9 @@ function criarMovel(): void {
           new THREE.MeshBasicMaterial({ color: holeColor })
         );
         esfera.position.set(xLateral, y, z);
+        esfera.visible = mostrarFuros; // Inicia invisível
         scene.add(esfera);
-        partes.push(esfera);
+        furosELinhas.push(esfera); // Adiciona ao array de furos
 
         // === Adiciona a linha verde de orientação ===
         const lineLength = 0.05; // comprimento da linha (5 cm)
@@ -157,9 +173,10 @@ function criarMovel(): void {
         const points = [start, end];
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.Line(geometry, linhaMaterial);
+        line.visible = mostrarFuros; // Inicia invisível
 
         scene.add(line);
-        partes.push(line);
+        furosELinhas.push(line); // Adiciona ao array de furos
       }
     });
   }
