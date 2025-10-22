@@ -5,6 +5,7 @@ let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 let material: THREE.MeshLambertMaterial;
 let partes: THREE.Object3D[] = [];
+let opacidadeAtiva = false; // Controla o estado da opacidade
 
 init();
 criarMovel();
@@ -29,7 +30,11 @@ function init(): void {
 
   scene.add(new THREE.GridHelper(5, 20));
 
-  material = new THREE.MeshLambertMaterial({ color: 0xb7d6b33});
+  material = new THREE.MeshLambertMaterial({ 
+    color: 0xb7d6b3, 
+    opacity: 1.0, 
+    transparent: true 
+  });
 
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -39,6 +44,9 @@ function init(): void {
 
   const btn = document.getElementById("atualizar");
   if (btn) btn.addEventListener("click", atualizarMovel);
+
+  const btnOpacidade = document.getElementById("opacidade");
+  if (btnOpacidade) btnOpacidade.addEventListener("click", alternarOpacidade);
 }
 
 function getInputMeters(id: string, defaultMm: number): number {
@@ -50,6 +58,18 @@ function getInputMeters(id: string, defaultMm: number): number {
 function limparPartes() {
   partes.forEach((o) => scene.remove(o));
   partes = [];
+}
+
+function alternarOpacidade(): void {
+  opacidadeAtiva = !opacidadeAtiva;
+  
+  if (opacidadeAtiva) {
+    material.opacity = 0.1;
+  } else {
+    material.opacity = 1.0;
+  }
+  
+  material.needsUpdate = true;
 }
 
 function criarMovel(): void {
