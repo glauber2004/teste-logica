@@ -8,6 +8,7 @@ let partes: THREE.Object3D[] = [];
 let furosELinhas: THREE.Object3D[] = []; // Array separado para furos e linhas
 let opacidadeAtiva = false; // Controla o estado da opacidade
 let mostrarFuros = false; // Controla visibilidade dos furos
+let dadosPecas: any[] = []; // Armazena dados das peças para exportação
 
 init();
 criarMovel();
@@ -52,6 +53,9 @@ function init(): void {
 
   const btnFuros = document.getElementById("furos");
   if (btnFuros) btnFuros.addEventListener("click", alternarFuros);
+
+  const btnExportar = document.getElementById("exportar");
+  if (btnExportar) btnExportar.addEventListener("click", exportarJSON);
 }
 
 function getInputMeters(id: string, defaultMm: number): number {
@@ -65,6 +69,7 @@ function limparPartes() {
   partes = [];
   furosELinhas.forEach((o) => scene.remove(o));
   furosELinhas = [];
+  dadosPecas = []; // Limpa os dados das peças
 }
 
 function alternarOpacidade(): void {
@@ -95,24 +100,41 @@ function criarMovel(): void {
   const altura = getInputMeters("altura", 800);
   const espessura = getInputMeters("espessura", 18);
 
-  function criaPlaca(w: number, h: number, d: number, x: number, y: number, z: number): THREE.Mesh {
+  let numeroPeca = 1; // Contador para numeração das peças
+
+  function criaPlaca(w: number, h: number, d: number, x: number,y: number, z: number, nome: string): THREE.Mesh {
     const geom = new THREE.BoxGeometry(w, h, d);
     const mesh = new THREE.Mesh(geom, material);
     mesh.position.set(x, y, z);
     scene.add(mesh);
     partes.push(mesh);
+
+    // Armazena dados da peça (converte metros para mm)
+    const dadosPeca = {
+      numero: numeroPeca++,
+      nome: nome,
+      comprimento_mm: w * 1000,
+      largura_mm: h * 1000,
+      espessura_mm: d * 1000,
+      furos: [] as any[]
+    };
+    dadosPecas.push(dadosPeca);
+
     return mesh;
   }
 
   // Criação das placas
-  criaPlaca(largura, espessura, profundidade, 0, espessura / 2, 0); // base
-  criaPlaca(largura, espessura, profundidade, 0, altura - espessura / 2, 0); // topo
-  criaPlaca(espessura, altura, profundidade, -(largura / 2) + espessura / 2, altura / 2, 0); // lateral esquerda
-  criaPlaca(espessura, altura, profundidade, (largura / 2) - espessura / 2, altura / 2, 0); // lateral direita
-  criaPlaca(largura, espessura, profundidade, 0, altura / 2, 0); // prateleira central
+  criaPlaca(largura, espessura, profundidade, 0, espessura / 2, 0, "Base"); // base
+  criaPlaca(largura, espessura, profundidade, 0, altura - espessura / 2, 0, "Topo"); // topo
+  criaPlaca(espessura, altura, profundidade, -(largura / 2) + espessura / 2, altura / 2, 0, "Lateral Esquerda"); // lateral esquerda
+  criaPlaca(espessura, altura, profundidade, (largura / 2) - espessura / 2, altura / 2, 0, "Lateral Direita"); // lateral direita
+  criaPlaca(largura, espessura, profundidade, 0, altura / 2, 0, "Prateleira Central"); // prateleira central
 
   // ====================== FUROS ======================
   const profundidadeMm = profundidade * 1000;
+  const holeRadius = 0.02;
+  const holeDiameter = holeRadius * 2 * 1000; // diâmetro em mm
+  const holeProfundidade = 12; // profundidade do furo em mm (valor padrão para cavilhas)
 
   function qtdFurosPorProfundidade(mm: number): number {
     if (mm <= 500) return 2;
@@ -124,7 +146,6 @@ function criarMovel(): void {
 
   const qtdFuros = qtdFurosPorProfundidade(profundidadeMm);
 
-  const holeRadius = 0.02;
   const holeColor = 0xff5a5a;
   const margemInferior = espessura + 0.02;
   const areaUtilProfundidade = Math.max(0, profundidade - 2 * margemInferior);
@@ -133,12 +154,21 @@ function criarMovel(): void {
   // níveis (base, prateleira, topo)
   const niveisY = [espessura / 2, altura / 2, altura - espessura / 2];
 
-  function criarFurosNaLateral(xLateral: number) {
+  function criarFurosNaLateral(xLateral: number, numeroPecaLateral: number) {
     const linhaMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 }); // verde
 
     niveisY.forEach((y) => {
       for (let i = 0; i < qtdFuros; i++) {
         const z = -profundidade / 2 + margemInferior + i * espacamento;
+
+        // Adiciona furo aos dados da peça lateral
+        dadosPecas[numeroPecaLateral].furos.push({
+          x_mm: 0, // Na face da peça lateral, x é sempre 0 (centro da espessura)
+          y_mm: (y - altura / 2) * 1000, // Relativo ao centro da peça
+          z_mm: (z + profundidade / 2) * 1000, // Relativo à borda frontal
+          diametro_mm: holeDiameter,
+          profundidade_mm: holeProfundidade
+        });
 
         // Cria a bolinha vermelha
         const esfera = new THREE.Mesh(
@@ -182,12 +212,25 @@ function criarMovel(): void {
   }
 
   // laterais esquerda e direita (encostadas)
-  criarFurosNaLateral(-(largura / 2) + espessura / 2); // esquerda
-  criarFurosNaLateral((largura / 2) - espessura / 2);  // direita
+  criarFurosNaLateral(-(largura / 2) + espessura / 2, 2); // esquerda (peça 3)
+  criarFurosNaLateral((largura / 2) - espessura / 2, 3);  // direita (peça 4)
 }
 
 function atualizarMovel(): void {
   criarMovel();
+}
+
+function exportarJSON(): void {
+  const dataStr = JSON.stringify(dadosPecas, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'nome_peça.json';
+  link.click();
+  
+  URL.revokeObjectURL(url);
 }
 
 function animate(): void {
