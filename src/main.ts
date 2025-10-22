@@ -29,7 +29,7 @@ function init(): void {
 
   scene.add(new THREE.GridHelper(5, 20));
 
-  material = new THREE.MeshLambertMaterial({ color: 0x8b7d6b });
+  material = new THREE.MeshLambertMaterial({ color: 0xb7d6b33});
 
   window.addEventListener("resize", () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -76,9 +76,6 @@ function criarMovel(): void {
   criaPlaca(espessura, altura, profundidade, (largura / 2) - espessura / 2, altura / 2, 0); // lateral direita
   criaPlaca(largura, espessura, profundidade, 0, altura / 2, 0); // prateleira central
 
-
-
-  
   // ====================== FUROS ======================
   const profundidadeMm = profundidade * 1000;
 
@@ -102,9 +99,13 @@ function criarMovel(): void {
   const niveisY = [espessura / 2, altura / 2, altura - espessura / 2];
 
   function criarFurosNaLateral(xLateral: number) {
+    const linhaMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 }); // verde
+
     niveisY.forEach((y) => {
       for (let i = 0; i < qtdFuros; i++) {
         const z = -profundidade / 2 + margemInferior + i * espacamento;
+
+        // Cria a bolinha vermelha
         const esfera = new THREE.Mesh(
           new THREE.SphereGeometry(holeRadius, 12, 12),
           new THREE.MeshBasicMaterial({ color: holeColor })
@@ -112,6 +113,33 @@ function criarMovel(): void {
         esfera.position.set(xLateral, y, z);
         scene.add(esfera);
         partes.push(esfera);
+
+        // === Adiciona a linha verde de orientação ===
+        const lineLength = 0.05; // comprimento da linha (5 cm)
+
+        const start = new THREE.Vector3(xLateral, y, z);
+        let end: THREE.Vector3;
+
+        // Decide a direção conforme o nível da bolinha
+        if (Math.abs(y - niveisY[0]) < 1e-6) {
+          // Bolinhas de baixo → linha apontando para cima (Y aumenta)
+          end = new THREE.Vector3(xLateral, y + lineLength, z);
+        } else if (Math.abs(y - niveisY[1]) < 1e-6) {
+          // Bolinhas do meio → linha apontando para o centro do móvel (X -> 0)
+          // Se estiver na lateral esquerda (x < 0) somamos; se na direita (x > 0) subtraímos.
+          const towardCenterX = xLateral < 0 ? xLateral + lineLength : xLateral - lineLength;
+          end = new THREE.Vector3(towardCenterX, y, z);
+        } else {
+          // Bolinhas de cima → linha apontando para baixo (Y diminui)
+          end = new THREE.Vector3(xLateral, y - lineLength, z);
+        }
+
+        const points = [start, end];
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geometry, linhaMaterial);
+
+        scene.add(line);
+        partes.push(line);
       }
     });
   }
