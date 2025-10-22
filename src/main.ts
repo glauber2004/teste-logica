@@ -100,7 +100,7 @@ function criarMovel(): void {
   const altura = getInputMeters("altura", 800);
   const espessura = getInputMeters("espessura", 18);
 
-  let numeroPeca = 1; // Contador para numeração das peças
+  let numeroPeca = 1; // Contador numeração das peças
 
   function criaPlaca(w: number, h: number, d: number, x: number,y: number, z: number, nome: string): THREE.Mesh {
     const geom = new THREE.BoxGeometry(w, h, d);
@@ -109,7 +109,7 @@ function criarMovel(): void {
     scene.add(mesh);
     partes.push(mesh);
 
-    // Armazena dados da peça (converte metros para mm)
+    // Armazena dados da peça(metros para mm)
     const dadosPeca = {
       numero: numeroPeca++,
       nome: nome,
@@ -134,7 +134,7 @@ function criarMovel(): void {
   const profundidadeMm = profundidade * 1000;
   const holeRadius = 0.02;
   const holeDiameter = holeRadius * 2 * 1000; // diâmetro em mm
-  const holeProfundidade = 12; // profundidade do furo em mm (valor padrão para cavilhas)
+  const holeProfundidade = 12; // profundidade do furo em mm
 
   function qtdFurosPorProfundidade(mm: number): number {
     if (mm <= 500) return 2;
@@ -163,30 +163,30 @@ function criarMovel(): void {
 
         // Adiciona furo aos dados da peça lateral
         dadosPecas[numeroPecaLateral].furos.push({
-          x_mm: 0, // Na face da peça lateral, x é sempre 0 (centro da espessura)
+          x_mm: 0, // Na face da peça lateral, x é 0 (centro da espessura)
           y_mm: (y - altura / 2) * 1000, // Relativo ao centro da peça
           z_mm: (z + profundidade / 2) * 1000, // Relativo à borda frontal
           diametro_mm: holeDiameter,
           profundidade_mm: holeProfundidade
         });
 
-        // Cria a bolinha vermelha
+        //bolinha vermelha
         const esfera = new THREE.Mesh(
           new THREE.SphereGeometry(holeRadius, 12, 12),
           new THREE.MeshBasicMaterial({ color: holeColor })
         );
         esfera.position.set(xLateral, y, z);
-        esfera.visible = mostrarFuros; // Inicia invisível
+        esfera.visible = mostrarFuros;
         scene.add(esfera);
         furosELinhas.push(esfera); // Adiciona ao array de furos
 
-        // === Adiciona a linha verde de orientação ===
+        //linha verde de orientação
         const lineLength = 0.05; // comprimento da linha (5 cm)
 
         const start = new THREE.Vector3(xLateral, y, z);
         let end: THREE.Vector3;
 
-        // Decide a direção conforme o nível da bolinha
+        // direção conforme o nível da bolinha
         if (Math.abs(y - niveisY[0]) < 1e-6) {
           // Bolinhas de baixo → linha apontando para cima (Y aumenta)
           end = new THREE.Vector3(xLateral, y + lineLength, z);
@@ -203,7 +203,7 @@ function criarMovel(): void {
         const points = [start, end];
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.Line(geometry, linhaMaterial);
-        line.visible = mostrarFuros; // Inicia invisível
+        line.visible = mostrarFuros;
 
         scene.add(line);
         furosELinhas.push(line); // Adiciona ao array de furos
